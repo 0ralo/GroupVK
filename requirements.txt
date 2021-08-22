@@ -1,0 +1,14 @@
+aiohttp==3.7.4.post0
+async-timeout==3.0.1
+attrs==21.2.0
+chardet==4.0.0
+django-environ==0.4.5
+idna==3.2
+loguru==0.5.3
+multidict==5.1.0
+peewee==3.14.4
+pydantic==1.8.2
+typing-extensions==3.10.0.0
+vbml==1.1
+vkwave==0.2.11
+yarl==1.6.3
