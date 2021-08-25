@@ -34,20 +34,20 @@ class Work(Model):
 
 
 class User(Model):
-	id = PrimaryKeyField()  # id - primary key and user id in vk
-	bot_id = IntegerField(default=0)  # id in my bot - connected to passport
-	money = BigIntegerField(default=0)  # money in bot system
-	passport = BooleanField(default=False)  # boolean if has passport
-	house = ForeignKeyField(House, on_delete="CASCADE", null=True)  # type of house (0 - empty, 1 - flat, 2 - house, 3 - private house)
-	work = ForeignKeyField(Work, on_delete="CASCADE", null=True)  # type of work(0 - empty, i - i type of work)
+	id = PrimaryKeyField()
+	bot_id = IntegerField(default=0)
+	money = BigIntegerField(default=0)
+	passport = BooleanField(default=False)
+	house = ForeignKeyField(House, on_delete="CASCADE", null=True)
+	work = ForeignKeyField(Work, on_delete="CASCADE", null=True)
 	permissions = ForeignKeyField(Permissions, on_delete="CASCADE", default=Permissions.get(id=1))
-	donate_status = SmallIntegerField(default=0)  # status shows hom much money user spent on this bot
-	health = IntegerField(default=100)  # health of player 0 - 100 if 0 game restarts to default for player
-	person_x = IntegerField(default=100)  # default spawn coords.x
-	person_y = IntegerField(default=100)  # default spawn cords.y map has 1000x1000
-	map_size = CharField(default="3x3", max_length=3)  # map size
-	bonus_time = DateTimeField(default=date(2020, 8, 27))  # time when bonus was taken last time
-	banned = BooleanField(default=False)  # is user banned
+	donate_status = SmallIntegerField(default=0)
+	health = IntegerField(default=100)
+	person_x = IntegerField(default=100)
+	person_y = IntegerField(default=100)
+	map_size = CharField(default="3x3", max_length=3)
+	bonus_time = DateTimeField(default=date(2020, 8, 27))
+	banned = BooleanField(default=False)
 	ready_for_transactions = BooleanField(default=False)
 
 	class Meta:
@@ -56,6 +56,7 @@ class User(Model):
 
 class CellType(Model):
 	name = CharField(max_length=20)
+	cellemoji = CharField(max_length=1, default="#")
 
 	class Meta:
 		database = database
@@ -67,9 +68,9 @@ class Cell(Model):
 	x = IntegerField(null=False)
 	y = IntegerField(null=False)
 	owner = ForeignKeyField(User, on_delete="CASCADE")
-	type = ForeignKeyField(CellType, on_delete="CASCADE")  # type of cell (1 - user_house(everyone can make i t), 2 - shop(user can make it and admin), 3 - casino(allways user build it) TODO(WALL, more...)
-	visits = SmallIntegerField(default=0)  # how many times people visited your building
-	sum = BigIntegerField(default=0)  # sum of buisness
+	type = ForeignKeyField(CellType, on_delete="CASCADE")
+	visits = SmallIntegerField(default=0)
+	sum = BigIntegerField(default=0)
 
 	class Meta:
 		database = database
@@ -92,12 +93,12 @@ class Transaction(Model):
 
 if __name__ == '__main__':
 	if argv[1] == "create":
-		database.create_tables([Transaction])
+		database.create_tables([CellType])
 		print("created")
 	elif argv[1] == "migrate":
 		migrate(
-			migrator.drop_column("User", "already_for_transactions"),
-			migrator.add_column("User", "ready_for_transactions", User.ready_for_transactions)
+			# migrator.drop_column("User", "already_for_transactions"),
+			migrator.add_column("CellType", "cellemoji", CellType.cellemoji)
 		)
 		print("migrated")
 

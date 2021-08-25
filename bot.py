@@ -138,9 +138,9 @@ async def signing_transaction(tran):
 	                                    random_id=0)
 
 
-async def hasher():
+async def hasher(length):
 	hash = ""
-	for i in range(64):
+	for i in range(length):
 		hash += ascii_letters[random.randint(0, len(ascii_letters) - 1)]
 	return hash
 
@@ -160,7 +160,7 @@ async def person_ready(event: bot.SimpleBotEvent):
 	keyboard = Keyboard(inline=True)
 	success = randint(0, 3)
 	for i in range(4):
-		small_hash = (await hasher())[:8]
+		small_hash = await hasher(8)
 		keyboard.add_text_button(small_hash,
 		                         payload={"hash": payload["hash"], "success": i == success, "from": payload["from"],
 		                                  "to": payload["to"]})
@@ -177,7 +177,7 @@ async def person_ready(event: bot.SimpleBotEvent):
 	keyboard = Keyboard(inline=True)
 	success = randint(0, 3)
 	for i in range(4):
-		small_hash = (await hasher())[:8]
+		small_hash = await hasher(8)
 		keyboard.add_text_button(small_hash if i != success else correct,
 		                         payload={"hash": payload["hash"], "success": i == success, "from": payload["from"],
 		                                  "to": payload["to"]})
@@ -245,7 +245,7 @@ async def get_garants(data):
 	for num, garant in enumerate(garants):
 		data["sign_transaction"] = garant.garant.id
 		data["comission"] = garant.comission
-		data["hash"] = await hasher()
+		data["hash"] = await hasher(64)
 		user = await bot.api_context.users.get(user_ids=garant.garant.id)
 		keyboard.add_text_button(f"[{num + 1}] {user.response[0].first_name} комиссия:{garant.comission}%",
 		                         payload=data)
@@ -278,6 +278,9 @@ async def transfer_request(event: bot.SimpleBotEvent):
 		return
 	if not user.ready_for_transactions:
 		await event.answer("У вас отключены переводы")
+		return
+	if data["id"] == user.id:
+		await event.answer("Нельзя отправить перевод себе")
 		return
 	data = {"to": data["id"], "from": event.object.object.message.peer_id, "sum": data["sum"]}
 	keyboard = await get_garants(data)
@@ -328,7 +331,7 @@ async def profile(event: bot.SimpleBotEvent):
 	         .where(Cell.owner == user)
 	         .limit(4)
 	         .offset((page - 1) * 4))
-	for i, j in enumerate(cells):
+	for j in cells:
 		keyboard.add_text_button(f"[{j.x}:{j.y}] type={j.type.name}")
 		keyboard.add_row()
 	keyboard.add_text_button("<-", payload={"profile": 1, "page": page - 1})
@@ -443,30 +446,16 @@ async def city(event: bot.SimpleBotEvent, child: bool = False):
 			if map[i][j] == -1:
 				cell = "X"
 				color = ButtonColor.NEGATIVE
-			elif map[i][j] == "#":
-				cell = "#"
-				color = ButtonColor.PRIMARY
-			elif map[i][j] == "🚶":
-				cell = "🚶"
-				color = ButtonColor.PRIMARY
-			elif map[i][j] == "Дом":
-				cell = "🏠"
-				color = ButtonColor.SECONDARY
-			elif map[i][j] == 2:
-				...
-			elif map[i][j] == 3:
-				...
-			elif map[i][j] == 4:
-				cell = "🏢"
-				color = ButtonColor.POSITIVE
+			elif map[i][j] != -1:
+				cell, color = map[i][j], ButtonColor.PRIMARY
 			keyboard.add_text_button(cell, color=color)
 		keyboard.add_row()
 	if Cell.get_or_none(x=user.person_x, y=user.person_y):
 		map = Cell.get(x=user.person_x, y=user.person_y)
-		if map.type.name == 1 and user.id == map.owner_id:
+		if map.type.name == "Дом" and user.id == map.owner_id:
 			keyboard.add_text_button(f"Войти в {map.name}", ButtonColor.POSITIVE,
 			                         {"enter": "1", "x": map.x, "y": map.y})
-		elif map.type.name == 1 and user.id != map.owner_id:
+		elif map.type.name == "Дом" and user.id != map.owner_id:
 			...
 		else:
 			keyboard.add_text_button(f"Войти в {map.name}", ButtonColor.POSITIVE,
